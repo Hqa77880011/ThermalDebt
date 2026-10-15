@@ -142,6 +142,11 @@ def run(args):
         temperature = true_state + args.ambient
         noise = rng.uniform(-1, 1, 2) * np.asarray(config["observation_error"])
         controller.observe(temperature + noise)
+        boundary_captures = np.flatnonzero(captures == timestamp)
+        for index in boundary_captures:
+            if pending is not None:
+                requests[pending]["status"] = "dropped_superseded"
+            pending = int(index)
         age = max(0, timestamp - captures[pending]) if pending is not None else 0
         action, diagnostic = controller.select(duration - timestamp, age, slot.offered_rate, slot.background_w)
         infeasible += int(not diagnostic["feasible"])
@@ -157,10 +162,11 @@ def run(args):
         else:
             ready = max(ready, timestamp + diagnostic["planning_seconds"])
             peak_memory = max(peak_memory, slot_memory)
-        indexes = np.flatnonzero((captures >= timestamp) & (captures < timestamp + 1))
+        indexes = np.flatnonzero((captures > timestamp) & (captures < timestamp + 1))
         events = [(float(captures[index]), 0, int(index)) for index in indexes]
         if action != controller.pause and specification["fps"] > 0:
-            events.extend((timestamp + offset, 1, -1) for offset in np.arange(0, 1, 1 / specification["fps"]))
+            first_admission = max(timestamp + diagnostic["planning_seconds"], ready, busy_until)
+            events.extend((event_time, 1, -1) for event_time in np.arange(first_admission, timestamp + 1, 1 / specification["fps"]))
         for event_time, kind, index in sorted(events):
             if kind == 0:
                 if pending is not None:

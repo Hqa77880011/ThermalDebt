@@ -62,7 +62,7 @@ The candidate family contains the shifted previous plan, constant actions and si
 
 Discounted debt uses `Z_next = exp(-1/tau) * Z + max(T-soft_limit,0)` in degree-Celsius seconds. With the linear objective, inherited debt is common to candidate rankings; predicted new exceedances and their persistence affect selection. The implementation does not add a hard debt constraint or treat debt as stored heat.
 
-The executor processes capture and admission events in time order. A busy processor has one pending latest frame; a new capture supersedes that pending frame. Admission uses expected capture-to-result delay, and realized late/interrupted requests remain in the denominator. Requested actions appear in `history.json`; actually executed classifier choices appear per request. Cold transitions block execution and charge their memory/energy even when they reduce delivered work. Characterized action latency plus loading must fit the one-second control slot. `--measured-execution` uses real per-image timing logs instead of fixed profile service times, subject to that subsecond characterization.
+The executor processes capture and admission events in time order. Captures arriving exactly at the current decision boundary enter the latest-frame queue before the controller reads pending age. A busy processor has one pending latest frame; a new capture supersedes that pending frame. The first admission follows actual planning, loading and preceding-job completion; subsequent admission opportunities respect the selected rate. Admission uses expected capture-to-result delay, and realized late/interrupted requests remain in the denominator. Requested actions appear in `history.json`; actually executed classifier choices appear per request. Cold transitions block execution and charge their memory/energy even when they reduce delivered work. Characterized action latency plus loading must fit the one-second control slot. `--measured-execution` uses real per-image timing logs instead of fixed profile service times, subject to that subsecond characterization. Pause keeps the cached model resident and advances its dwell interval, so hot resumption does not reset model residency or incur another cold load.
 
 | Option | Default | Meaning |
 |---|---:|---|
@@ -79,7 +79,7 @@ The executor processes capture and admission events in time order. A busy proces
 | `--residual-count`, `--recovery-count` | 2, 5 | Out/in-envelope observations for recovery transitions |
 | `--thermal-multiplier` | 1 | Executor heat-input mismatch with the unchanged controller predictor |
 
-Repeated out-of-envelope temperature observations restrict the planner to low demand or pause, widen the declared disturbance envelope and invalidate the previous plan. Recovery requires consecutive compatible observations; the terminal feasibility check still applies before service resumes. When no action is modeled feasible, the executor pauses and records infeasibility rather than labeling the state safe.
+Repeated out-of-envelope temperature observations restrict the planner to low demand or pause, widen the declared disturbance envelope and invalidate the previous plan. Recovery ends only after consecutive compatible observations and an admissible pause continuation under the expanded recovery envelope, including the finite-session thermal/energy reserve. When no action is modeled feasible, the executor pauses and records infeasibility rather than labeling the state safe.
 
 ## Baselines, ablations and stress
 

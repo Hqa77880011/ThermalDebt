@@ -37,8 +37,6 @@ class Scheduler:
             if self.bad >= self.args.residual_count and self.args.policy != "no_monitor":
                 self.recovery = True
                 self.previous_plan = None
-            if self.recovery and self.good >= self.args.recovery_count:
-                self.recovery = False
             intersection_low, intersection_high = np.maximum(low, predicted_low), np.minimum(high, predicted_high)
             if inside:
                 low, high = intersection_low, intersection_high
@@ -111,6 +109,11 @@ class Scheduler:
     def select(self, remaining, age, rate, background):
         started = time.perf_counter()
         policy = self.args.policy
+        if self.recovery and self.good >= self.args.recovery_count:
+            fallback = self.admissible(self.resident, self.pause, self.lower, self.upper, remaining,
+                                       self.energy, age, rate, background)
+            if fallback is not None:
+                self.recovery = False
         permitted = [0, self.pause] if self.recovery else list(range(len(self.actions)))
         if policy in ("fixed_low", "fixed_high"):
             selected = 0 if policy == "fixed_low" else self.pause - 1
@@ -150,7 +153,7 @@ class Scheduler:
                 score += service - debt_weight * debt / self.config["debt_reference"] - energy_weight * expenditure / self.config["energy_reference"] - switch_weight * loading / self.args.deadline
                 debt = np.exp(-1 / self.args.debt_tau) * debt + max(0, high[0] + self.args.ambient - self.args.soft_temperature)
                 low, high, energy = next_low, next_high, next_energy
-                dwell = dwell + 1 if action == previous else 1
+                dwell = dwell + 1 if action in (previous, self.pause) else 1
                 previous = previous if action == self.pause else action
             if valid:
                 score -= self.args.terminal_weight * max(0, high[0] + self.args.ambient - self.args.soft_temperature)
@@ -167,7 +170,7 @@ class Scheduler:
         self.previous_prediction = self.propagate(self.lower, self.upper, measured_energy)
         self.debt = np.exp(-1 / self.args.debt_tau) * self.debt + max(0, temperature[0] - self.args.soft_temperature)
         self.energy -= measured_energy / 3600
-        self.dwell = self.dwell + 1 if action == self.previous else 1
+        self.dwell = self.dwell + 1 if action in (self.resident, self.pause) else 1
         self.previous = action
         if action != self.pause:
             self.resident = action
