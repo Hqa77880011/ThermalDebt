@@ -10,6 +10,8 @@ class Scheduler:
         self.actions = config["actions"]
         if any(action["latency_s"] < 0 or action["load_s"] < 0 or action["latency_s"] + action["load_s"] >= 1 for action in self.actions):
             raise ValueError("Action latency and loading must fit the one-second slot characterization")
+        if any(not 0 <= action["accuracy"] <= 1 or min(action["fps"], action["active_w"], action["memory_mib"], action["switch_j"]) < 0 for action in self.actions):
+            raise ValueError("Action accuracy must be a probability and resource quantities nonnegative")
         self.pause = len(self.actions) - 1
         self.a = np.array(config["A"], dtype=float)
         self.b = np.array(config["B"], dtype=float)
@@ -146,7 +148,6 @@ class Scheduler:
                 energy_weight = 0 if policy in ("temperature_mpc", "greedy", "threshold") else self.args.energy_weight
                 switch_weight = 0 if policy == "no_switching" else self.args.switch_weight
                 score += service - debt_weight * debt / self.config["debt_reference"] - energy_weight * expenditure / self.config["energy_reference"] - switch_weight * loading / self.args.deadline
-                score -= self.args.age_weight * (age if step == 0 else 0) / self.args.deadline
                 debt = np.exp(-1 / self.args.debt_tau) * debt + max(0, high[0] + self.args.ambient - self.args.soft_temperature)
                 low, high, energy = next_low, next_high, next_energy
                 dwell = dwell + 1 if action == previous else 1

@@ -92,7 +92,7 @@ def prepare(args):
     ids = sorted(table["id"].unique())
     prediction = table.pivot(index="id", columns="action", values="prediction").reindex(index=ids, columns=actions)
     latency = table.pivot(index="id", columns="action", values="latency_s").reindex(index=ids, columns=actions)
-    if prediction.isna().any().any() or latency.isna().any().any() or (latency <= 0).any().any():
+    if not np.isfinite(prediction.to_numpy()).all() or not np.isfinite(latency.to_numpy()).all() or (latency <= 0).any().any():
         raise ValueError("Each evaluation image needs a positive-latency prediction from every action")
     labels = table.groupby("id")["label"].first().reindex(ids).to_numpy()
     rates = [15, 20, 30, 30, 20, 15]
@@ -148,14 +148,15 @@ def run(args):
         overruns += int(diagnostic["planning_seconds"] > args.planning_allowance)
         specification = config["actions"][action]
         loading, switching = controller.transition(resident, action)
+        slot_memory = controller.memory(resident, action)
         if action != controller.pause and action != resident:
             switches += 1
             ready = max(timestamp + diagnostic["planning_seconds"], busy_until) + loading
-            peak_memory = max(peak_memory, controller.memory(resident, action))
+            peak_memory = max(peak_memory, slot_memory)
             resident = action
         else:
             ready = max(ready, timestamp + diagnostic["planning_seconds"])
-            peak_memory = max(peak_memory, controller.memory(resident, action))
+            peak_memory = max(peak_memory, slot_memory)
         indexes = np.flatnonzero((captures >= timestamp) & (captures < timestamp + 1))
         events = [(float(captures[index]), 0, int(index)) for index in indexes]
         if action != controller.pause and specification["fps"] > 0:
@@ -189,7 +190,7 @@ def run(args):
         history.append(dict(time=timestamp, phase=int(slot.phase), action=specification["name"],
                             die_c=float(temperature[0]), body_c=float(temperature[1]), debt=controller.debt,
                             remaining_wh=controller.energy, slot_j=slot_energy, recovery=controller.recovery,
-                            pending_age=age, resident_memory_mib=peak_memory, **diagnostic))
+                            pending_age=age, slot_peak_resident_memory_mib=slot_memory, **diagnostic))
         controller.feedback(action, slot_energy, temperature, slot.background_w)
         disturbance = rng.uniform(-1, 1, 2) * np.asarray(config["disturbance"])
         true_state = controller.a @ true_state + controller.b * args.thermal_multiplier * slot_energy + disturbance
@@ -248,7 +249,7 @@ def main():
     for name, default in (("ambient", 32), ("soft-temperature", 38), ("hard-temperature", 45), ("power-budget", 3),
                           ("memory-budget", 512), ("deadline", 0.1), ("planning-allowance", 0.01), ("quality-floor", 0),
                           ("debt-tau", 120), ("debt-weight", 0.2), ("energy-weight", 0.05), ("switch-weight", 0.02),
-                          ("age-weight", 0.3), ("terminal-weight", 0.01), ("recovery-multiplier", 2), ("thermal-multiplier", 1)):
+                          ("terminal-weight", 0.01), ("recovery-multiplier", 2), ("thermal-multiplier", 1)):
         execution.add_argument(f"--{name}", type=float, default=default)
     execution.add_argument("--measured-execution", action="store_true")
     plotting = sub.add_parser("plot")

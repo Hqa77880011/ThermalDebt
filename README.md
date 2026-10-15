@@ -74,7 +74,7 @@ The executor processes capture and admission events in time order. A busy proces
 | `--minimum-dwell` | 5 | Model-switch dwell slots |
 | `--planning-allowance` | 0.01 | Predicted planning duration for admission; actual duration is also charged |
 | `--debt-tau`, `--debt-weight` | 120, 0.2 | Exposure decay and normalized penalty |
-| `--energy-weight`, `--switch-weight`, `--age-weight` | 0.05, 0.02, 0.3 | Dimensionless planning penalties |
+| `--energy-weight`, `--switch-weight` | 0.05, 0.02 | Dimensionless planning penalties; frame age enters deadline admission |
 | `--quality-floor` | 0 | Minimum development accuracy for admitted classifiers |
 | `--residual-count`, `--recovery-count` | 2, 5 | Out/in-envelope observations for recovery transitions |
 | `--thermal-multiplier` | 1 | Executor heat-input mismatch with the unchanged controller predictor |
