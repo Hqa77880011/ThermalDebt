@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "thermaldebt"
+version = "0.1.0"
+description = "Thermal-debt scheduling implementation"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.24", "scipy>=1.11", "pandas>=2", "matplotlib>=3.7", "torch>=2.2", "pillow>=10", "psutil>=5.9"]
+[project.scripts]
+thermaldebt = "thermaldebt.cli:main"
+[tool.setuptools.packages.find]
+include = ["thermaldebt*"]
+[tool.setuptools.package-data]
+thermaldebt = ["defaults.json"]

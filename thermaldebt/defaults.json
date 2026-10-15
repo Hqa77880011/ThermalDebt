@@ -1,0 +1,18 @@
+{
+  "A": [[0.97, 0.02], [0.01, 0.985]],
+  "B": [0.03, 0.002],
+  "disturbance": [0.03, 0.01],
+  "observation_error": [0.01, 0.01],
+  "base_w": 2.0,
+  "workspace_mib": 48,
+  "reserve_j": 0.15,
+  "service_reference": 30,
+  "debt_reference": 120,
+  "energy_reference": 3,
+  "actions": [
+    {"name": "TD-L", "resolution": 160, "fps": 15, "active_w": 2.0, "latency_s": 0.025, "memory_mib": 96, "load_s": 0.015, "switch_j": 0.05},
+    {"name": "TD-M", "resolution": 192, "fps": 10, "active_w": 2.8, "latency_s": 0.045, "memory_mib": 160, "load_s": 0.015, "switch_j": 0.08},
+    {"name": "TD-H", "resolution": 224, "fps": 10, "active_w": 4.0, "latency_s": 0.075, "memory_mib": 256, "load_s": 0.015, "switch_j": 0.12},
+    {"name": "pause", "resolution": 0, "fps": 0, "active_w": 0, "latency_s": 0, "memory_mib": 0, "load_s": 0, "switch_j": 0, "accuracy": 0}
+  ]
+}
