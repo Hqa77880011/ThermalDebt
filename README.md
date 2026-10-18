@@ -113,12 +113,13 @@ The plots show temperature, debt, remaining energy and the service–energy fron
 
 ## Fixed reproduction setting
 
-Real disjoint development/evaluation classifier-prediction logs replayed through the declared finite thermal/energy model; 300s phases and seed13.
-
-The checked-in entry point fixes data seeds, methods, budgets and output paths. Inspect its commands without starting any computation:
+The fixed input is a rendered circle/square/triangle image task, with 90 development and 90 held-out evaluation images and disjoint IDs. A real pixel occupancy classifier predicts from each image resized to 16/24/40 pixels for the three actions; labels are read only for calibration/scoring after prediction.
 
 ```bash
-python reproduce.py --plan --development data/development --evaluation data/evaluation
+python reproduce.py --plan
+python reproduce.py --output outputs/finite-setting
 ```
 
-Remove `--plan` to execute the registered pipeline in a fresh output directory. The entry point calls the existing implementation; it does not insert paper results. Installation uses the package instructions above.
+The entry point runs `finite_data.py generate --output outputs/finite-setting/generated --seed 13`, then `finite_data.py profile --source outputs/finite-setting/generated`. This writes real per-image predictions and a declared cost profile: latency = 0.004 + 0.000035 × resolution² seconds, load = 0.01 seconds, with the existing finite thermal/power model. These coefficients are model assumptions, not hardware measurements. Calibration consumes that same profile without `--measured-latency`; preparation builds the request bank and the existing full/energy_mpc/fixed_low policies run matched 300-second workload phases. The executor reveals selected predictions only after the policy chooses an action.
+
+Optional external `--development development.csv --evaluation evaluation.csv` accepts both prediction logs together; the native collect/calibrate CLI remains available for physical timing.
