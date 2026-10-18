@@ -25,13 +25,11 @@ thermaldebt prepare --predictions data/generated/evaluation.csv --output data/se
 
 The profile declares analytic latency/load/thermal costs; these are model assumptions. External image/prediction logs use native `collect`/`calibrate` with independent development/evaluation IDs.
 
-## Training and inference
+## Execution and evaluation
 
 ```bash
 thermaldebt run --data data/session --profile data/profile.json --output outputs/full --policy full
 ```
-
-## Evaluation
 
 Replay records completed predictions, deadlines, energy/debt and modeled thermal states.
 
