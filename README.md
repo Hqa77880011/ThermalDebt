@@ -110,3 +110,15 @@ thermaldebt plot --runs outputs/full outputs/high outputs/energy outputs/tempera
 ```
 
 The plots show temperature, debt, remaining energy and the service–energy frontier computed from completed replay files.
+
+## Fixed reproduction setting
+
+Real disjoint development/evaluation classifier-prediction logs replayed through the declared finite thermal/energy model; 300s phases and seed13.
+
+The checked-in entry point fixes data seeds, methods, budgets and output paths. Inspect its commands without starting any computation:
+
+```bash
+python reproduce.py --plan --development data/development --evaluation data/evaluation
+```
+
+Remove `--plan` to execute the registered pipeline in a fresh output directory. The entry point calls the existing implementation; it does not insert paper results. Installation uses the package instructions above.
